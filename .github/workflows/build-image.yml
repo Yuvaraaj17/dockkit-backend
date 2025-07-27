@@ -1,0 +1,49 @@
+name: Build Custom Docker Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_image:
+        description: 'Base Docker image (e.g., ubuntu, alpine)'
+        required: true
+      packages:
+        description: 'Comma-separated list of packages (e.g., git,g++,cmake)'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Split packages string into array and generate Dockerfile
+        run: |
+          BASE_IMAGE="${{ github.event.inputs.base_image }}"
+          IFS=',' read -ra PACKAGES <<< "${{ github.event.inputs.packages }}"
+
+          echo "FROM $BASE_IMAGE" > Dockerfile
+          echo -n "RUN apt-get update && apt-get install -y" >> Dockerfile
+
+          for pkg in "${PACKAGES[@]}"; do
+              echo -n " $pkg" >> Dockerfile
+          done
+
+          echo "" >> Dockerfile
+
+      - name: Build Docker image
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}/custom-image:${{ github.run_number }} .
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Docker image
+        run: |
+          docker push ghcr.io/${{ github.repository }}/custom-image:${{ github.run_number }}
+
+      - name: Output image URL
+        run: echo "::set-output name=image_url::ghcr.io/${{ github.repository }}/custom-image:${{ github.run_number }}"
