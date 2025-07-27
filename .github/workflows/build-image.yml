@@ -58,6 +58,10 @@ jobs:
           docker push ghcr.io/yuvaraaj17/custom-image:${{ github.run_number }}
 
       - name: Output image URL
+        id: imageurl
         run: |
           REPO_LC="${GITHUB_REPOSITORY,,}"  # Convert to lowercase
-          echo "::set-output name=image_url::ghcr.io/yuvaraaj17/custom-image:${{ github.run_number }}"
+          echo "image_url=ghcr.io/yuvaraaj17/custom-image:${{ github.run_number }}" >> $GITHUB_OUTPUT
+      - name: Use image URL
+        run: echo "Docker image is ${{ steps.imageurl.outputs.image_url }}"
+
