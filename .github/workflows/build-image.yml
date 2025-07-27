@@ -35,6 +35,8 @@ jobs:
           done
 
           echo "" >> Dockerfile
+      - name: Print docker file
+        run: cat Dockerfile
 
       # - name: Build Docker image
       #   run: |
